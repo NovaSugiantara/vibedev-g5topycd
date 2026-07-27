@@ -1,21 +1,79 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Yarn Stash Yardage Calculator</title>
   <meta name="description" content="Quickly check if you have enough yarn for your next project." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
 <body>
+  
+  <div x-data="{ open: false }" x-effect="document.body.style.overflow = open ? 'hidden' : ''">
+    <div x-show="open" @click="open = false" x-transition.opacity.duration.200 class="fixed inset-0 z-40 bg-black/20 sm:bg-black/10"></div>
+
+    <div x-show="open" x-transition:enter="transform transition ease-out duration-200" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transform transition ease-in duration-150" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" class="fixed right-0 top-0 z-50 h-full w-72 sm:w-80 overflow-y-auto" style="background-color: var(--color-paper-card); box-shadow: -4px 0 24px rgba(0,0,0,0.08);">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-sm font-semibold uppercase tracking-wider" style="color: var(--color-text);">How to use</h2>
+          <button @click="open = false" class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-150 hover:bg-black/5" style="color: var(--color-text-muted);" aria-label="Close panel">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <ol class="space-y-5 text-sm" style="color: var(--color-text);">
+          <li class="flex gap-3">
+            <span class="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style="background-color: var(--color-accent); color: #fff;">1</span>
+            <span>Enter each yarn skein you own — its name, yards per skein, and how many you have.</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style="background-color: var(--color-accent); color: #fff;">2</span>
+            <span>Type the yardage your project pattern requires.</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold" style="background-color: var(--color-accent); color: #fff;">3</span>
+            <span>Read the result instantly — no buttons to press.</span>
+          </li>
+        </ol>
+
+        <hr class="my-6" style="border-color: var(--color-border);" />
+
+        <h3 class="text-xs font-semibold uppercase tracking-wider mb-3" style="color: var(--color-text-muted);">Status colors</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center gap-3">
+            <span class="w-3 h-3 rounded-full shrink-0" style="background-color: var(--color-green);"></span>
+            <span>You have enough yarn</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-3 h-3 rounded-full shrink-0" style="background-color: var(--color-yellow);"></span>
+            <span>Within 10% — cutting it close</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="w-3 h-3 rounded-full shrink-0" style="background-color: var(--color-red);"></span>
+            <span>Need more yarn</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button @click="open = !open" class="fixed bottom-5 right-5 z-30 w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:shadow-xl sm:bottom-6 sm:right-6" :class="open ? 'ring-2 ring-offset-2' : ''" :style="{ backgroundColor: open ? 'var(--color-accent)' : 'var(--color-paper-card)', color: open ? '#fff' : 'var(--color-accent)', ringColor: open ? 'var(--color-accent)' : 'transparent' }" x-bind:aria-label="open ? 'Close help' : 'Open help'">
+      <svg x-show="!open" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M8 8c0-1.1.9-2 2-2s2 .9 2 2c0 1.5-2 2-2 3.5V13"/><circle cx="10" cy="15" r=".5" fill="currentColor"/></svg>
+      <svg x-show="open" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l10 10M14 4l-10 10"/></svg>
+    </button>
+  </div>
+
   <div id="app" v-cloak class="min-h-screen flex items-start justify-center px-4 py-10 sm:py-16">
     <main class="w-full max-w-[700px]">
 
-      <!-- Header -->
       <header class="mb-8 text-center">
-        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight" style="color: var(--color-text);">
+        <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight leading-tight" style="color: var(--color-text); font-family: 'Inter Tight', sans-serif;">
           Yarn Stash Yardage
         </h1>
         <p class="mt-2 text-sm" style="color: var(--color-text-muted);">
@@ -23,31 +81,25 @@
         </p>
       </header>
 
-      <!-- Result Card -->
-      <section
-        aria-live="polite"
-        aria-atomic="true"
-        class="rounded-xl p-5 sm:p-6 mb-6 transition-all duration-200"
-        :style="resultCardStyle"
-      >
-        <template v-if="skeins.length > 0 && targetYards">
+      <section aria-live="polite" aria-atomic="true" class="rounded-xl p-5 sm:p-6 mb-6 transition-all duration-200" :style="statusInfo.cardStyle">
+        <template v-if="skeins.length > 0 && targetYards !== ''">
           <div>
             <div class="flex items-baseline justify-between mb-3">
-              <span class="text-sm font-medium uppercase tracking-wider text-xs" style="color: var(--color-text-muted);">Status</span>
-              <span class="text-sm font-medium" :style="{ color: statusColor }">{{ statusLabel }}</span>
+              <span class="text-xs font-semibold uppercase tracking-widest" style="color: var(--color-text-muted);">Status</span>
+              <span class="text-sm font-semibold" :style="{ color: statusInfo.color }">{{ statusInfo.label }}</span>
             </div>
             <div class="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div class="text-2xl sm:text-3xl font-semibold">{{ totalAvailable }}</div>
-                <div class="text-xs mt-1" style="color: var(--color-text-muted);">Available yds</div>
+                <div class="text-3xl sm:text-4xl font-bold leading-none tracking-tight" style="font-family: 'Inter Tight', sans-serif;">{{ totalAvailable }}</div>
+                <div class="text-xs mt-1.5" style="color: var(--color-text-muted);">Available yds</div>
               </div>
               <div>
-                <div class="text-2xl sm:text-3xl font-semibold">{{ targetYards }}</div>
-                <div class="text-xs mt-1" style="color: var(--color-text-muted);">Required yds</div>
+                <div class="text-3xl sm:text-4xl font-bold leading-none tracking-tight" style="font-family: 'Inter Tight', sans-serif;">{{ targetYards }}</div>
+                <div class="text-xs mt-1.5" style="color: var(--color-text-muted);">Required yds</div>
               </div>
               <div>
-                <div class="text-2xl sm:text-3xl font-semibold" :style="{ color: diffColor }">{{ diffDisplay }}</div>
-                <div class="text-xs mt-1" style="color: var(--color-text-muted);">Diff yds</div>
+                <div class="text-3xl sm:text-4xl font-bold leading-none tracking-tight" :style="{ color: statusInfo.diffColor, fontFamily: '\'Inter Tight\', sans-serif' }">{{ diffDisplay }}</div>
+                <div class="text-xs mt-1.5" style="color: var(--color-text-muted);">Diff yds</div>
               </div>
             </div>
           </div>
@@ -64,94 +116,41 @@
         </template>
       </section>
 
-      <!-- Target Yardage Input -->
       <section class="mb-6">
         <label for="target-yards" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">
           Project Yardage Required
         </label>
-        <input
-          id="target-yards"
-          type="number"
-          min="0"
-          step="1"
-          placeholder="e.g. 400"
-          v-model.number="targetYards"
-          class="w-full px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none"
-          :style="inputStyle"
-        />
+        <input id="target-yards" type="number" min="0" step="1" placeholder="e.g. 400" v-model.number="targetYards" class="w-full px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none" :style="inputStyle" />
       </section>
 
-      <!-- Add Skein Section -->
       <section class="mb-6">
         <h2 class="text-sm font-medium mb-3" style="color: var(--color-text);">Add Yarn Skein</h2>
         <form @submit.prevent="addSkein" class="flex flex-col sm:flex-row gap-2">
-          <input
-            type="text"
-            placeholder="Skein name"
-            v-model="newSkein.name"
-            required
-            class="flex-1 min-w-0 px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none"
-            :style="inputStyle"
-          />
-          <input
-            type="number"
-            placeholder="Yards"
-            min="1"
-            step="1"
-            v-model.number="newSkein.yards"
-            required
-            class="w-full sm:w-24 px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none"
-            :style="inputStyle"
-          />
-          <input
-            type="number"
-            placeholder="Qty"
-            min="1"
-            step="1"
-            v-model.number="newSkein.count"
-            required
-            class="w-full sm:w-20 px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none"
-            :style="inputStyle"
-          />
-          <button
-            type="submit"
-            class="px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-150 whitespace-nowrap hover:brightness-90"
-            :style="{
-              backgroundColor: 'var(--color-accent)',
-              color: '#fff'
-            }"
-          >
+          <input type="text" placeholder="Skein name" v-model="newSkein.name" required class="flex-1 min-w-0 px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none" :style="inputStyle" />
+          <input type="number" placeholder="Yards" min="1" step="1" v-model.number="newSkein.yards" required class="w-full sm:w-24 px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none" :style="inputStyle" />
+          <input type="number" placeholder="Qty" min="1" step="1" v-model.number="newSkein.count" required class="w-full sm:w-20 px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none" :style="inputStyle" />
+          <button type="submit" class="px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-150 whitespace-nowrap hover:brightness-90" :style="{ backgroundColor: 'var(--color-accent)', color: '#fff' }">
             Add
           </button>
         </form>
+        
+        <p v-if="error" class="text-xs mt-1.5" style="color: var(--color-red);">{{ error }}</p>
       </section>
 
-      <!-- Skein List -->
       <section>
         <h2 class="text-sm font-medium mb-3" style="color: var(--color-text);">
           Your Skeins
           <span v-show="skeins.length > 0" class="text-xs font-normal" style="color: var(--color-text-muted);">({{ skeins.length }})</span>
         </h2>
 
-        <!-- Empty State -->
         <div v-show="skeins.length === 0" class="text-center py-12 rounded-xl border-2 border-dashed" style="border-color: var(--color-border);">
           <p class="text-sm font-medium" style="color: var(--color-text-muted);">No skeins yet</p>
           <p class="text-xs mt-1" style="color: var(--color-text-muted);">Add your first skein above to start calculating.</p>
         </div>
 
-        <!-- Skein List -->
         <ul v-show="skeins.length > 0" class="space-y-2">
-          <li
-            v-for="(skein, index) in skeins"
-            :key="index"
-            class="rounded-xl p-4 transition-all duration-200"
-            :style="{
-              backgroundColor: 'var(--color-paper-card)',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)'
-            }"
-          >
-            <!-- Display Mode -->
-            <div v-show="editingIndex !== index" class="flex items-center justify-between gap-3">
+          <li v-for="skein in skeins" :key="skein.id" class="rounded-xl p-4 transition-all duration-200" :style="{ backgroundColor: 'var(--color-paper-card)', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)' }">
+            <div v-show="!isEditing(skein.id)" class="flex items-center justify-between gap-3">
               <div class="flex-1 min-w-0">
                 <div class="font-medium text-sm truncate">{{ skein.name }}</div>
                 <div class="text-xs mt-0.5" style="color: var(--color-text-muted);">
@@ -160,87 +159,35 @@
                 </div>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
-                <button
-                  @click="startEdit(index)"
-                  class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 hover:opacity-80"
-                  :style="{
-                    color: 'var(--color-accent)',
-                    backgroundColor: 'transparent'
-                  }"
-                >
+                <button @click="startEdit(skein)" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 hover:opacity-80" :style="{ color: 'var(--color-accent)', backgroundColor: 'transparent' }">
                   Edit
                 </button>
-                <button
-                  @click="deleteSkein(index)"
-                  class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 hover:opacity-80"
-                  :style="{
-                    color: 'var(--color-red)',
-                    backgroundColor: 'transparent'
-                  }"
-                >
+                <button @click="deleteSkein(skein.id)" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 hover:opacity-80" :style="{ color: 'var(--color-red)', backgroundColor: 'transparent' }">
                   Delete
                 </button>
               </div>
             </div>
 
-            <!-- Edit Mode -->
-            <div v-show="editingIndex === index">
-              <form @submit.prevent="saveEdit(index)" class="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  v-model="editingSkein.name"
-                  required
-                  class="flex-1 min-w-0 px-3 py-2 rounded-lg border text-sm outline-none transition-colors duration-150"
-                  :style="inputStyle"
-                />
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  v-model.number="editingSkein.yards"
-                  required
-                  class="w-full sm:w-20 px-3 py-2 rounded-lg border text-sm outline-none transition-colors duration-150"
-                  :style="inputStyle"
-                />
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  v-model.number="editingSkein.count"
-                  required
-                  class="w-full sm:w-16 px-3 py-2 rounded-lg border text-sm outline-none transition-colors duration-150"
-                  :style="inputStyle"
-                />
+            <div v-show="isEditing(skein.id)">
+              <form @submit.prevent="saveEdit()" class="flex flex-col sm:flex-row gap-2">
+                <input type="text" v-model="editingSkein.name" required class="flex-1 min-w-0 px-3 py-2 rounded-lg border text-sm outline-none transition-colors duration-150" :style="inputStyle" />
+                <input type="number" min="1" step="1" v-model.number="editingSkein.yards" required class="w-full sm:w-20 px-3 py-2 rounded-lg border text-sm outline-none transition-colors duration-150" :style="inputStyle" />
+                <input type="number" min="1" step="1" v-model.number="editingSkein.count" required class="w-full sm:w-16 px-3 py-2 rounded-lg border text-sm outline-none transition-colors duration-150" :style="inputStyle" />
                 <div class="flex gap-1.5">
-                  <button
-                    type="submit"
-                    class="px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150"
-                    :style="{
-                      backgroundColor: 'var(--color-accent)',
-                      color: '#fff'
-                    }"
-                  >
+                  <button type="submit" class="px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150" :style="{ backgroundColor: 'var(--color-accent)', color: '#fff' }">
                     Save
                   </button>
-                  <button
-                    type="button"
-                    @click="cancelEdit"
-                    class="px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150"
-                    :style="{
-                      backgroundColor: 'transparent',
-                      color: 'var(--color-text-muted)'
-                    }"
-                  >
+                  <button type="button" @click="cancelEdit" class="px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150" :style="{ backgroundColor: 'transparent', color: 'var(--color-text-muted)' }">
                     Cancel
                   </button>
                 </div>
               </form>
+              <p v-if="editError" class="text-xs mt-1.5" style="color: var(--color-red);">{{ editError }}</p>
             </div>
           </li>
         </ul>
       </section>
 
-      <!-- Total Summary -->
       <footer v-show="skeins.length > 0" class="mt-6 text-center text-sm" style="color: var(--color-text-muted);">
         Total stash: <span class="font-semibold" style="color: var(--color-text);">{{ totalAvailable }}</span> yards across <span class="font-semibold" style="color: var(--color-text);">{{ skeins.length }}</span> skein<template v-if="skeins.length !== 1">s</template>
       </footer>

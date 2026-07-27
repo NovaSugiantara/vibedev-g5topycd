@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tests — Yarn Stash Yardage Calculator</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .pass { color: #4a8c5c; }
+    .fail { color: #b94a4a; }
+    .test { padding: 0.5rem 0; border-bottom: 1px solid #eee; }
+    .summary { margin-top: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Yarn Calculator — Unit Tests</h1>
+  <div id="results"></div>
+  <script>
+    // Replica of app.js logic for isolated testing
+    const { createApp } = Vue
+    function totalAvailable(skeins) {
+      return skeins.reduce((sum, s) => sum + (s.yards * s.count), 0)
+    }
+    function difference(total, target) {
+      if (target === '' || target === null) return null
+      return total - target
+    }
+    function statusInfo(total, target, skeinCount) {
+      const d = difference(total, target)
+      const hasData = target !== '' && target !== null && skeinCount > 0
+      if (!hasData) return { label: '' }
+      if (d >= 0) return { label: 'Enough yarn' }
+      if (d >= -target * 0.1) return { label: 'Almost enough' }
+      return { label: 'Need more yarn' }
+    }
+    function diffDisplay(d) {
+      if (d === null) return '\u2014'
+      return d >= 0 ? `+${d}` : `${d}`
+    }
+    // Test runner
+    const results = document.getElementById('results')
+    let passed = 0
+    let failed = 0
+    function test(name, fn) {
+      try {
+        fn()
+        passed++
+        results.innerHTML += `<div class="test"><span class="pass">✓</span> ${name}</div>`
+      } catch (e) {
+        failed++
+        results.innerHTML += `<div class="test"><span class="fail">✗</span> ${name} — ${e.message}</div>`
+      }
+    }
+    function assert(condition, msg) {
+      if (!condition) throw new Error(msg || 'assertion failed')
+    }
+    // --- Tests ---
+    test('totalAvailable: single skein', () => {
+      assert(totalAvailable([{ yards: 200, count: 1 }]) === 200)
+    })
+    test('totalAvailable: multiple skeins', () => {
+      assert(totalAvailable([{ yards: 200, count: 2 }, { yards: 100, count: 1 }]) === 500)
+    })
+    test('totalAvailable: empty list', () => {
+      assert(totalAvailable([]) === 0)
+    })
+    test('difference: exact match', () => {
+      assert(difference(400, 400) === 0)
+    })
+    test('difference: surplus', () => {
+      assert(difference(500, 400) === 100)
+    })
+    test('difference: shortage', () => {
+      assert(difference(300, 400) === -100)
+    })
+    test('difference: empty target returns null', () => {
+      assert(difference(300, '') === null)
+    })
+    test('statusInfo: enough when surplus', () => {
+      assert(statusInfo(500, 400, 1).label === 'Enough yarn')
+    })
+    test('statusInfo: enough when exact', () => {
+      assert(statusInfo(400, 400, 1).label === 'Enough yarn')
+    })
+    test('statusInfo: yellow within 10%', () => {
+      assert(statusInfo(370, 400, 1).label === 'Almost enough')
+    })
+    test('statusInfo: red beyond 10%', () => {
+      assert(statusInfo(300, 400, 1).label === 'Need more yarn')
+    })
+    test('statusInfo: no data', () => {
+      assert(statusInfo(0, '', 0).label === '')
+    })
+    test('diffDisplay: null shows em-dash', () => {
+      assert(diffDisplay(null) === '\u2014')
+    })
+    test('diffDisplay: positive shows + prefix', () => {
+      assert(diffDisplay(100) === '+100')
+    })
+    test('diffDisplay: negative shows - prefix', () => {
+      assert(diffDisplay(-50) === '-50')
+    })
+    test('diffDisplay: zero shows +0', () => {
+      assert(diffDisplay(0) === '+0')
+    })
+    // --- Summary ---
+    const total = passed + failed
+    results.innerHTML += `
+      <div class="summary">
+        <strong>${passed}/${total} passed</strong>
+        ${failed > 0 ? `<span class="fail"> — ${failed} failed</span>` : '<span class="pass"> — all passing</span>'}
+      </div>
+    `
+  </script>
+</body>
+</html>
