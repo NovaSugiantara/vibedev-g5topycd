@@ -1,1 +1,10 @@
-:root{--color-paper:#faf7f2;--color-paper-card:#ffffff;--color-text:#2c2c2c;--color-text-muted:#7a756f;--color-accent:#6b8f5e;--color-accent-hover:#5a7a4e;--color-border:#e5ddd4;--color-green:#4a8c5c;--color-green-bg:#eaf5ed;--color-yellow:#b8942e;--color-yellow-bg:#faf3dd;--color-red:#b94a4a;--color-red-bg:#fae8e8;--color-focus:#6b8f5e;--radius-card:16px;--radius-sm:8px;--space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px;}html{overflow-x:clip;}body{overflow-x:clip;background-color:var(--color-paper);color:var(--color-text);}input:focus-visible, button:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;}input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}input[type="number"]{-moz-appearance:textfield;}[v-cloak], [x-cloak]{display:none !important;}@media (prefers-reduced-motion:reduce){*, *::before, *::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;}}
+:root{--color-paper:#faf7f2;--color-paper-card:#fff;--color-text:#2c2c2c;--color-text-muted:#7a756f;--color-accent:#6b8f5e;--color-accent-hover:#5a7a4e;--color-border:#e5ddd4;--color-green:#4a8c5c;--color-green-bg:#eaf5ed;--color-yellow:#b8942e;--color-yellow-bg:#faf3dd;--color-red:#b94a4a;--color-red-bg:#fae8e8;--color-focus:#6b8f5e;--radius-card:16px;--radius-sm:8px;--space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;--space-2xl:48px}
+html{overflow-x:clip}
+body{overflow-x:clip;background-color:var(--color-paper);color:var(--color-text)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+[v-cloak],[x-cloak]{display:none!important}
+button:active:not(:disabled){transform:scale(.97)}
+.skein-card{border-left:3px solid transparent;transition:border-color .2s,box-shadow .2s}
+.skein-card:hover{border-left-color:var(--color-accent)}
