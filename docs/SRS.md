@@ -6,7 +6,8 @@ Simple frontend only
 
 - HTML
 - Tailwind CSS (CDN)
-- Alpine.js (CDN)
+- Vue 3 (CDN)
+- Alpine.js (CDN) — mobile nav / info drawer
 - Vanilla JavaScript
 
 No build process required.

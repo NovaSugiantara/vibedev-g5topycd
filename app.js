@@ -1,112 +1,117 @@
+let nextId = 1
 const app = Vue.createApp({
   data() {
     return {
       skeins: [],
       newSkein: { name: '', yards: '', count: '' },
       targetYards: '',
-      editingIndex: null,
-      editingSkein: { name: '', yards: '', count: '' }
-    }
-  },
-
-  computed: {
-    totalAvailable() {
-      return this.skeins.reduce((sum, s) => sum + (s.yards * s.count), 0)
-    },
-
-    difference() {
-      if (!this.targetYards) return null
-      return this.totalAvailable - this.targetYards
-    },
-
-    diffDisplay() {
-      const d = this.difference
-      if (d === null) return '\u2014'
-      return d >= 0 ? `+${d}` : `${d}`
-    },
-
-    diffColor() {
-      const d = this.difference
-      if (d === null) return 'var(--color-text-muted)'
-      if (d >= 0) return 'var(--color-green)'
-      if (d >= -this.targetYards * 0.1) return 'var(--color-yellow)'
-      return 'var(--color-red)'
-    },
-
-    statusLabel() {
-      const d = this.difference
-      if (d === null) return ''
-      if (d >= 0) return 'Enough yarn'
-      if (d >= -this.targetYards * 0.1) return 'Almost enough'
-      return 'Need more yarn'
-    },
-
-    statusColor() {
-      const d = this.difference
-      if (d === null) return 'var(--color-text-muted)'
-      if (d >= 0) return 'var(--color-green)'
-      if (d >= -this.targetYards * 0.1) return 'var(--color-yellow)'
-      return 'var(--color-red)'
-    },
-
-    resultCardStyle() {
-      const d = this.difference
-      if (!this.targetYards || this.skeins.length === 0) {
-        return {
-          backgroundColor: 'var(--color-paper-card)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)'
-        }
-      }
-      if (d >= 0) {
-        return { backgroundColor: 'var(--color-green-bg)', borderLeft: '4px solid var(--color-green)' }
-      }
-      if (d >= -this.targetYards * 0.1) {
-        return { backgroundColor: 'var(--color-yellow-bg)', borderLeft: '4px solid var(--color-yellow)' }
-      }
-      return { backgroundColor: 'var(--color-red-bg)', borderLeft: '4px solid var(--color-red)' }
-    },
-
-    inputStyle() {
-      return {
+      editingId: null,
+      editingSkein: { name: '', yards: '', count: '' },
+      error: '',
+      editError: '',
+      inputStyle: {
         backgroundColor: 'var(--color-paper-card)',
         borderColor: 'var(--color-border)',
         color: 'var(--color-text)'
       }
     }
   },
-
+  computed: {
+    totalAvailable() {
+      return this.skeins.reduce((sum, s) => sum + (s.yards * s.count), 0)
+    },
+    difference() {
+      if (this.targetYards === '' || this.targetYards === null) return null
+      return this.totalAvailable - this.targetYards
+    },
+    diffDisplay() {
+      const d = this.difference
+      if (d === null) return '\u2014'
+      return d >= 0 ? `+${d}` : `${d}`
+    },
+    statusInfo() {
+      const d = this.difference
+      const hasData = this.targetYards !== '' && this.targetYards !== null && this.skeins.length > 0
+      if (!hasData) {
+        return {
+          label: '',
+          color: 'var(--color-text-muted)',
+          cardStyle: {
+            backgroundColor: 'var(--color-paper-card)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)'
+          },
+          diffColor: 'var(--color-text-muted)'
+        }
+      }
+      if (d >= 0) {
+        return {
+          label: 'Enough yarn',
+          color: 'var(--color-green)',
+          cardStyle: { backgroundColor: 'var(--color-green-bg)', borderLeft: '4px solid var(--color-green)' },
+          diffColor: 'var(--color-green)'
+        }
+      }
+      if (d >= -this.targetYards * 0.1) {
+        return {
+          label: 'Almost enough',
+          color: 'var(--color-yellow)',
+          cardStyle: { backgroundColor: 'var(--color-yellow-bg)', borderLeft: '4px solid var(--color-yellow)' },
+          diffColor: 'var(--color-yellow)'
+        }
+      }
+      return {
+        label: 'Need more yarn',
+        color: 'var(--color-red)',
+        cardStyle: { backgroundColor: 'var(--color-red-bg)', borderLeft: '4px solid var(--color-red)' },
+        diffColor: 'var(--color-red)'
+      }
+    }
+  },
   methods: {
     addSkein() {
-      if (!this.newSkein.name || !this.newSkein.yards || !this.newSkein.count) return
+      this.error = ''
+      if (!this.newSkein.name || !this.newSkein.yards || !this.newSkein.count) {
+        this.error = 'Please fill in all fields to add a skein.'
+        return
+      }
       this.skeins.push({
+        id: nextId++,
         name: this.newSkein.name.trim(),
         yards: Number(this.newSkein.yards),
         count: Number(this.newSkein.count)
       })
       this.newSkein = { name: '', yards: '', count: '' }
     },
-
-    startEdit(index) {
-      this.editingIndex = index
-      this.editingSkein = { ...this.skeins[index] }
+    startEdit(skein) {
+      this.editError = ''
+      this.editingId = skein.id
+      this.editingSkein = { ...skein }
     },
-
-    saveEdit(index) {
-      if (!this.editingSkein.name || !this.editingSkein.yards || !this.editingSkein.count) return
-      this.skeins[index] = { ...this.editingSkein }
+    saveEdit() {
+      this.editError = ''
+      if (!this.editingSkein.name || !this.editingSkein.yards || !this.editingSkein.count) {
+        this.editError = 'All fields are required.'
+        return
+      }
+      const idx = this.skeins.findIndex(s => s.id === this.editingId)
+      if (idx === -1) return
+      this.skeins[idx] = { ...this.editingSkein }
       this.cancelEdit()
     },
-
     cancelEdit() {
-      this.editingIndex = null
+      this.editingId = null
       this.editingSkein = { name: '', yards: '', count: '' }
+      this.editError = ''
     },
-
-    deleteSkein(index) {
-      this.skeins.splice(index, 1)
-      if (this.editingIndex === index) this.cancelEdit()
+    deleteSkein(id) {
+      const idx = this.skeins.findIndex(s => s.id === id)
+      if (idx === -1) return
+      this.skeins.splice(idx, 1)
+      if (this.editingId === id) this.cancelEdit()
+    },
+    isEditing(id) {
+      return this.editingId === id
     }
   }
 })
-
 app.mount('#app')
