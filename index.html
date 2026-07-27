@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yarn Stash Yardage Calculator</title>
+  <meta name="description" content="Quickly check if you have enough yarn for your next project." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+  <style>
+    /* Hallmark · macrostructure: Workbench · tone: soft · anchor hue: warm-green */
+    :root {
+      --color-paper: #faf7f2;
+      --color-paper-card: #ffffff;
+      --color-text: #2c2c2c;
+      --color-text-muted: #7a756f;
+      --color-accent: #6b8f5e;
+      --color-accent-hover: #5a7a4e;
+      --color-border: #e5ddd4;
+      --color-green: #4a8c5c;
+      --color-green-bg: #eaf5ed;
+      --color-yellow: #b8942e;
+      --color-yellow-bg: #faf3dd;
+      --color-red: #b94a4a;
+      --color-red-bg: #fae8e8;
+      --color-focus: #6b8f5e;
+      --radius-card: 16px;
+      --radius-sm: 8px;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+    }
+    html {
+      overflow-x: clip;
+    }
+    body {
+      overflow-x: clip;
+      background-color: var(--color-paper);
+      color: var(--color-text);
+    }
+    /* Hide spinner on number inputs */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    [x-cloak] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div x-data="yarnCalc()" class="min-h-screen flex items-start justify-center px-4 py-10 sm:py-16">
+    <main class="w-full max-w-[700px]">
+      <!-- Header -->
+      <header class="mb-8 text-center">
+        <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight" style="color: var(--color-text);">
+          Yarn Stash Yardage
+        </h1>
+        <p class="mt-2 text-sm" style="color: var(--color-text-muted);">
+          Add your skeins and a target yardage to see if you have enough.
+        </p>
+      </header>
+
+      <!-- Result Card (always visible, adjusts to state) -->
+      <section
+        aria-live="polite"
+        aria-atomic="true"
+        class="rounded-xl p-5 sm:p-6 mb-6 transition-all duration-200"
+        :style="resultCardStyle"
+      >
+        <template x-if="skeins.length > 0 && targetYards">
+          <div>
+            <div class="flex items-baseline justify-between mb-3">
+              <span class="text-sm font-medium uppercase tracking-wider text-xs" style="color: var(--color-text-muted);">Status</span>
+              <span class="text-sm font-medium" x-text="statusLabel" :style="{ color: statusColor }"></span>
+            </div>
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div class="text-2xl sm:text-3xl font-semibold" x-text="totalAvailable"></div>
+                <div class="text-xs mt-1" style="color: var(--color-text-muted);">Available yds</div>
+              </div>
+              <div>
+                <div class="text-2xl sm:text-3xl font-semibold" x-text="targetYards"></div>
+                <div class="text-xs mt-1" style="color: var(--color-text-muted);">Required yds</div>
+              </div>
+              <div>
+                <div class="text-2xl sm:text-3xl font-semibold" :class="diffClass" x-text="diffDisplay"></div>
+                <div class="text-xs mt-1" style="color: var(--color-text-muted);">Diff yds</div>
+              </div>
+            </div>
+          </div>
+        </template>
+        <template x-if="skeins.length === 0">
+          <p class="text-sm text-center" style="color: var(--color-text-muted);">
+            Add a skein below to get started.
+          </p>
+        </template>
+        <template x-if="skeins.length > 0 && !targetYards">
+          <p class="text-sm text-center" style="color: var(--color-text-muted);">
+            Enter a target project yardage to see your status.
+          </p>
+        </template>
+      </section>
+
+      <!-- Target Yardage Input -->
+      <section class="mb-6">
+        <label for="target-yards" class="block text-sm font-medium mb-1.5" style="color: var(--color-text);">
+          Project Yardage Required
+        </label>
+        <input
+          id="target-yards"
+          type="number"
+          min="0"
+          step="1"
+          placeholder="e.g. 400"
+          x-model.number="targetYards"
+          class="w-full px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none"
+          :style="inputStyle"
+        />
+      </section>
+
+      <!-- Add Skein Section -->
+      <section class="mb-6">
+        <h2 class="text-sm font-medium mb-3" style="color: var(--color-text);">Add Yarn Skein</h2>
+        <form @submit.prevent="addSkein" class="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            placeholder="Skein name"
+            x-model="newSkein.name"
+            required
+            class="flex-1 min-w-0 px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none"
+            :style="inputStyle"
+          />
+          <input
+            type="number"
+            placeholder="Yards"
+            min="1"
+            step="1"
+            x-model.number="newSkein.yards"
+            required
+            class="w-full sm:w-24 px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none"
+            :style="inputStyle"
+          />
+          <input
+            type="number"
+            placeholder="Qty"
+            min="1"
+            step="1"
+            x-model.number="newSkein.count"
+            required
+            class="w-full sm:w-20 px-4 py-2.5 rounded-lg border transition-colors duration-150 outline-none"
+            :style="inputStyle"
+          />
+          <button
+            type="submit"
+            class="px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-150 whitespace-nowrap"
+            :style="{
+              backgroundColor: 'var(--color-accent)',
+              color: '#fff'
+            }"
+            @mouseenter="$el.style.backgroundColor = 'var(--color-accent-hover)'"
+            @mouseleave="$el.style.backgroundColor = 'var(--color-accent)'"
+          >
+            Add
+          </button>
+        </form>
+      </section>
+
+      <!-- Skein List -->
+      <section>
+        <h2 class="text-sm font-medium mb-3" style="color: var(--color-text);">
+          Your Skeins
+          <span x-show="skeins.length > 0" class="text-xs font-normal" style="color: var(--color-text-muted);" x-text="`(${skeins.length})`"></span>
+        </h2>
+
+        <!-- Empty State -->
+        <div x-show="skeins.length === 0" class="text-center py-12 rounded-xl border-2 border-dashed" style="border-color: var(--color-border);">
+          <p class="text-sm font-medium" style="color: var(--color-text-muted);">No skeins yet</p>
+          <p class="text-xs mt-1" style="color: var(--color-text-muted);">Add your first skein above to start calculating.</p>
+        </div>
+
+        <!-- Skein List -->
+        <ul x-show="skeins.length > 0" class="space-y-2">
+          <template x-for="(skein, index) in skeins" :key="index">
+            <li
+              class="rounded-xl p-4 transition-all duration-200"
+              :style="{
+                backgroundColor: 'var(--color-paper-card)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)'
+              }"
+            >
+              <!-- Display Mode -->
+              <div x-show="editingIndex !== index" class="flex items-center justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-sm truncate" x-text="skein.name"></div>
+                  <div class="text-xs mt-0.5" style="color: var(--color-text-muted);">
+                    <span x-text="skein.yards"></span> yds × <span x-text="skein.count"></span> skein<span x-show="skein.count > 1">s</span>
+                    = <span x-text="skein.yards * skein.count"></span> yds
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button
+                    @click="startEdit(index)"
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 hover:opacity-80"
+                    :style="{
+                      color: 'var(--color-accent)',
+                      backgroundColor: 'transparent'
+                    }"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    @click="deleteSkein(index)"
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150 hover:opacity-80"
+                    :style="{
+                      color: 'var(--color-red)',
+                      backgroundColor: 'transparent'
+                    }"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              <!-- Edit Mode -->
+              <div x-show="editingIndex === index" x-cloak>
+                <form @submit.prevent="saveEdit(index)" class="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    x-model="editingSkein.name"
+                    required
+                    class="flex-1 min-w-0 px-3 py-2 rounded-lg border text-sm outline-none transition-colors duration-150"
+                    :style="inputStyle"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    x-model.number="editingSkein.yards"
+                    required
+                    class="w-full sm:w-20 px-3 py-2 rounded-lg border text-sm outline-none transition-colors duration-150"
+                    :style="inputStyle"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    x-model.number="editingSkein.count"
+                    required
+                    class="w-full sm:w-16 px-3 py-2 rounded-lg border text-sm outline-none transition-colors duration-150"
+                    :style="inputStyle"
+                  />
+                  <div class="flex gap-1.5">
+                    <button
+                      type="submit"
+                      class="px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150"
+                      :style="{
+                        backgroundColor: 'var(--color-accent)',
+                        color: '#fff'
+                      }"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      @click="cancelEdit"
+                      class="px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150"
+                      :style="{
+                        backgroundColor: 'transparent',
+                        color: 'var(--color-text-muted)'
+                      }"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </li>
+          </template>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    function yarnCalc() {
+      return {
+        skeins: [],
+        newSkein: { name: '', yards: '', count: '' },
+        targetYards: '',
+        editingIndex: null,
+        editingSkein: { name: '', yards: '', count: '' },
+
+        get totalAvailable() {
+          return this.skeins.reduce((sum, s) => sum + (s.yards * s.count), 0);
+        },
+
+        get difference() {
+          if (!this.targetYards) return null;
+          return this.totalAvailable - this.targetYards;
+        },
+
+        get diffDisplay() {
+          const d = this.difference;
+          if (d === null) return '—';
+          return d >= 0 ? `+${d}` : `${d}`;
+        },
+
+        get diffClass() {
+          const d = this.difference;
+          if (d === null) return '';
+          if (d >= 0) return 'text-green-600';
+          if (d >= -this.targetYards * 0.1) return 'text-yellow-600';
+          return 'text-red-600';
+        },
+
+        get statusLabel() {
+          const d = this.difference;
+          if (d === null) return '';
+          if (d >= 0) return 'Enough yarn';
+          if (d >= -this.targetYards * 0.1) return 'Almost enough';
+          return 'Need more yarn';
+        },
+
+        get statusColor() {
+          const d = this.difference;
+          if (d === null) return 'var(--color-text-muted)';
+          if (d >= 0) return 'var(--color-green)';
+          if (d >= -this.targetYards * 0.1) return 'var(--color-yellow)';
+          return 'var(--color-red)';
+        },
+
+        get resultCardStyle() {
+          const d = this.difference;
+          if (!this.targetYards || this.skeins.length === 0) {
+            return {
+              backgroundColor: 'var(--color-paper-card)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)'
+            };
+          }
+          if (d >= 0) {
+            return { backgroundColor: 'var(--color-green-bg)', borderLeft: '4px solid var(--color-green)' };
+          }
+          if (d >= -this.targetYards * 0.1) {
+            return { backgroundColor: 'var(--color-yellow-bg)', borderLeft: '4px solid var(--color-yellow)' };
+          }
+          return { backgroundColor: 'var(--color-red-bg)', borderLeft: '4px solid var(--color-red)' };
+        },
+
+        get inputStyle() {
+          return {
+            backgroundColor: 'var(--color-paper-card)',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text)'
+          };
+        },
+
+        addSkein() {
+          if (!this.newSkein.name || !this.newSkein.yards || !this.newSkein.count) return;
+          this.skeins.push({
+            name: this.newSkein.name.trim(),
+            yards: Number(this.newSkein.yards),
+            count: Number(this.newSkein.count)
+          });
+          this.newSkein = { name: '', yards: '', count: '' };
+        },
+
+        startEdit(index) {
+          this.editingIndex = index;
+          this.editingSkein = { ...this.skeins[index] };
+        },
+
+        saveEdit(index) {
+          if (!this.editingSkein.name || !this.editingSkein.yards || !this.editingSkein.count) return;
+          this.skeins[index] = { ...this.editingSkein };
+          this.cancelEdit();
+        },
+
+        cancelEdit() {
+          this.editingIndex = null;
+          this.editingSkein = { name: '', yards: '', count: '' };
+        },
+
+        deleteSkein(index) {
+          this.skeins.splice(index, 1);
+          if (this.editingIndex === index) this.cancelEdit();
+        }
+      };
+    }
+  </script>
+</body>
+</html>
