@@ -27,7 +27,7 @@ Plus the exact yardage difference.
 
 - HTML
 - Tailwind CSS (CDN)
-- Alpine.js (CDN)
+- Vue 3 (CDN)
 - Vanilla JavaScript
 
 No build process. No dependencies to install.
